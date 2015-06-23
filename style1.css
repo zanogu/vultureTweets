@@ -1,0 +1,483 @@
+
+		body
+		{
+			font-family: Arial, sans-serif;
+			background: #fff;
+		}
+
+		body div.mainCont
+		{
+			
+			width: 100%;
+
+
+
+		}
+
+		div.overlay{
+			background-color:rgba(20, 20, 20, 0.9);
+			position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+			z-index: 99;
+			display: none;
+			 
+
+		}
+
+
+		div.descriptionContainer
+		{
+			float:left;
+            width:180px;
+        
+		}
+
+		div.vizContainer
+		{
+			
+        overflow: auto; /* [2] */
+        height: -webkit-calc(100vh - 32px); 
+
+		}
+
+
+
+		div.description 
+		{
+			
+
+		}
+
+		.eventName p{
+
+			font-family: Arial, sans-serif;
+			font-size: 36px;
+			font-weight: bold;
+			text-decoration: underline;
+		}
+
+		div.eventName, div.eventDescription, div.tplContainer,div.tContainer, div.dContainer{
+		position:absolute;
+		width: 300px;}
+
+		
+
+		div.tContainer div, div.dContainer div{
+			float: right;
+			
+		}
+
+		div.tContainer p, div.dContainer p{
+			display: inline-block;
+			font-size: 12px;
+			margin-left: 0px !important;
+			margin-top: 5px !important;
+		}
+
+		div.tplContainer .tplNum {
+
+			font-size: 32px;
+			font-weight: bold; 
+
+		} 
+
+		div.tplContainer {
+			
+			overflow: hidden;
+    		white-space: nowrap;
+		}	
+
+		div.tplContainer div{
+			
+			float: right;
+		}	
+
+		div.tplContainer p.tplNum{
+			
+			display: inline-block;
+			margin-left: 0px !important;
+			margin-top: 5px !important;
+
+		}	
+
+		div.explanation {
+			float: left !important;
+			width: 50%;
+			white-space: pre-wrap;
+
+		}
+		p.explanation{
+			font-size: 12px;
+			font-weight: bold;
+			margin-bottom: 0px;
+
+		}
+
+		p.explanation1{
+			font-size: 10px;
+			margin-top: 0px;
+
+		}
+
+
+
+		.eventDescription p{
+			font-size: 12px;
+			font-weight: normal;
+		}
+
+		.menu span {
+			margin-left: 9px;
+			font-size: 12px;
+			font-weight: bold;
+			text-decoration: underline;
+			cursor: pointer;
+		}
+
+		.closeThis
+		{
+			margin-left: 9px;
+			font-size: 14px;
+			font-weight: bold;
+			text-decoration: underline;
+			cursor: pointer;
+			color: rgb(221, 0, 121);
+			float: right;
+			margin: 10px;
+		}
+
+		.line, .axis, path.domain{
+			shape-rendering: crispEdges;
+
+		}
+
+		.tick line{
+			shape-rendering: crispEdges;
+
+		}
+
+
+		rect.graphBackground
+		{
+			opacity: 0;
+		}
+
+		path.totalTweets
+		{
+			fill:#0099FF}
+		/*
+		path.totalTweets.segment
+		{
+			fill: #03F}
+		
+		path.negTweets
+		{	   
+			fill: #F3F}
+		path.negTweets.segment
+		{
+			fill: #C3F}
+		
+		path.neuTweets
+		{
+			fill:#63F}
+		path.neuTweets.segment
+		{
+			fill: #60F }
+			
+		path.posTweets
+		{
+			fill:#3CF}
+		path.posTweets.segment
+		{
+			fill: #39F}*/
+			
+		
+		path.inactive.totalTweets
+		{
+			fill:  #CCC}
+			
+		
+		path.deathsCum
+		{
+			
+			stroke-width: 1.5;
+			 fill: none;}
+
+		text.deathsCum{
+
+			font-size: 18px;
+			font-weight: bold;
+			text-transform: capitalize;
+			cursor: pointer;
+			text-decoration: underline;
+		}
+
+		text.tplTotal{
+
+			font-size: 14px;
+			font-weight: bold;
+			
+		}
+
+		path.deathsCum.outline
+		{
+			
+			stroke-width: 1;
+			/*shape-rendering: crispEdges;*/
+
+			}
+
+
+
+		path.tweetLine
+		{
+			
+			stroke-width: 1;
+			
+			 fill: none;}
+
+
+
+
+
+
+
+		rect.marker
+		{
+			
+		}	 
+			 
+		g.markerInfo path.deathsMarkerLine 
+		{
+			stroke-width: 1;
+			fill: none;
+		}
+
+				
+		
+		g.markerInfo text.sent{
+
+			font-size: 14px;
+			fill: #eee;
+			cursor:arrow;
+			
+
+
+		}
+
+		g.markerInfo text.date{
+
+			font-size: 10px;
+			cursor:arrow;
+			font-weight: bold;
+			
+
+
+		}
+
+		.pieLabels text{
+
+			font-size: 10px;
+			cursor:arrow;
+			font-weight: bold;
+			fill: rgb(60,60,60);
+
+
+		}
+
+
+
+
+
+
+
+
+		text.markerInfo.cumDeaths
+		{
+			font-size: 16px;
+			font-weight: bold;
+			}
+		text.cumDeaths.subline
+		{
+			font-size: 10px;
+			font-weight: bold;
+			}
+
+		text.deaths
+		{
+			font-size: 28px;
+			cursor:arrow;
+			dy: 20px; 
+			font-weight: bold;
+			}
+
+		text.legend
+		{
+			font-size: 10px;
+			
+			cursor: arrow;
+				font-weight: bold;
+			}
+
+		g.markerInfo text.tweets
+		{
+			font-size: 14px;
+			cursor:arrow;
+			dy: 20px; 
+			
+			}
+
+		g.markerInfo text.tplToday
+		{
+			font-size: 14px;
+			cursor:arrow;
+			font-weight: bold;
+			
+			}
+
+		text.sentGraphText{
+
+			font-size: 10px;
+			font-weight: bold;
+
+		}
+
+		.tweetText div {
+
+			font-size: 10px;
+			font-weight: bold;
+
+
+		}
+			
+
+
+		g.context path{
+			
+			stroke-width: 1;
+			
+			 fill: none;
+
+			
+			
+			}
+		
+		g.context path.active{
+			
+			
+			
+			}
+			
+		.brush .extent {
+		  stroke: #fff;
+		  fill-opacity: .125;
+		  shape-rendering: crispEdges;
+		}
+
+		.brushCloseText{
+
+			font-size: 12px;
+			text-decoration: underline;
+			cursor: pointer;
+			font-weight: bold;
+		}
+
+
+
+	
+
+		
+		.tweetAxis path.domain 
+		{
+			opacity: 0;
+
+		}
+
+
+		.tweetAxis text
+		{
+			
+			font-size: 10px;
+			fill: black;
+
+		}
+
+		.tweetAxis line
+		{
+			stroke:  black;
+		}
+
+
+		.min path.domain 
+		{
+			opacity: 0;
+
+		}
+
+		.min line
+		{
+			stroke:  black;
+		}
+
+
+
+		.x.axis path,
+.x.axis line {
+  fill: none;
+ 
+}
+
+
+
+.x.axis text{
+
+	font-size: 10px;
+
+}
+
+
+.y.axis path
+ {
+	stroke-width: 0;
+	display: none;
+  fill: none;
+  
+ 
+}
+
+.y.axis line
+{
+	stroke-width: 1;
+  fill: none;
+	 
+}
+
+.y.axis text
+{
+	font-size: 10px;
+	font-weight: normal;
+	 
+}
+
+.yAxis.label
+{
+	font-size: 10px;
+	font-weight: bold;
+
+
+}
+
+
+
+
+
+
+		
+		
+			
+			
+        
+       

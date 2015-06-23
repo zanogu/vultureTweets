@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Test</title>
+        <script type="text/javascript" src="../d3/d3.js"></script>
+        <script type="text/javascript" src="serviceFunctions.js"></script>
+         <script type="text/javascript" src="jquery-2.1.3.min.js"></script>
+         <link rel="stylesheet" type="text/css" href="style1.css" media="screen" />
+       
+    </head>
+    <body>
+    	<div class="overlay" id="help">
+    			<img src="../img/a-15.png" id="img1">
+    			<img src="../img/a-16.png" id="img2">
+    			<img src="../img/a-17.png" id="img3">
+    			<img src="../img/a-18.png" id="img4">
+    			<img src="../img/a-19.png" id="img5">
+    			<img src="../img/a-20.png" id="img6">
+    		
+    			<span onclick = "hideOverlay('#help')" class ="closeThis">Close</span>
+    		
+    	</div>
+    	<div class = "mainCont">
+
+    		<div class = "descriptionContainer">
+    			<div class="logo"> 
+    				<img src="logo.png" height="40" style ="margin-left: -5px">
+    			</div>
+    			<div class="menu" >
+    				<span onclick = "showOverlay('#help')" id ="helpURL">Help</span>
+    				<span onclick = "" id ="aboutURL">About</span>
+    			</div>
+    			<div class = "eventName description"></div>
+    			<div class = "eventDescription description"></div>
+				<div class = "dContainer description"></div>
+
+    			<div class = "tContainer description"></div>
+    			<div class = "tplContainer description"></div>
+    		</div>
+	    	<div class = "vizContainer" id="vizContainer">
+		   		 <svg> 
+		   		 	<defs>
+		   		 		<g id = "manSymbol">
+							<polygon fill="#009DCF" points="11.96,15.403 18.165,15.403 18.165,35.95 15.687,35.95 15.687,54.323 11.96,54.323 11.96,35.95 
+								10.475,35.95 8.989,35.95 8.989,54.323 5.263,54.323 5.263,35.95 2.784,35.95 2.784,15.403 8.989,15.403 	"/>
+							<circle fill="#009DCF" cx="10.475" cy="10.683" r="5.256"/>
+						</g>
+		   		 	</defs>
+		   		 </svg>
+		   	</div>
+	   </div>
+        <script type="text/javascript">
+		
+		
+		
+			
+		jQuery.extend({
+						deepclone: function(objThing) {
+							// return jQuery.extend(true, {}, objThing);
+							/// Fix for arrays, without this, arrays passed in are returned as OBJECTS! WTF?!?!
+							if ( jQuery.isArray(objThing) ) {
+								return jQuery.makeArray( jQuery.deepclone($(objThing)) );
+							}
+							return jQuery.extend(true, {}, objThing);
+						},
+					});
+
+
+		var capitalize = function(){
+		    txt = $(this).text().toUpperCase();
+		    $(this).text(txt);};
+
+			//GLOBAL
+			var base = 1427835600.0 * 1000;
+			var currentTime = (new Date).getTime();
+			var everySec = 60;
+			var syriaCounter = [];
+
+			var events = ["syria", "ebola"];
+
+			var eventName = " ",
+				eventDescription = " ";
+			
+			// Spatial
+			margin = 10;
+			var w=parseInt(d3.select("#vizContainer").style('width'))-32;
+			var h2 = parseInt(d3.select("#vizContainer").style('height')) - 32;
+			brushHeight =50;
+			var h=h2 - brushHeight - margin*5;
+
+			
+			h0 = 0;
+			
+			
+			unigap = 10;
+			textGap = 30;
+
+
+			
+			marginLeft = 250;
+			xGraphStart = marginLeft;
+			xGraphEnd = w - 200;
+			yGraphStart = 100;
+			yGraphEnd = h;
+
+			yBrushStart = yGraphEnd + margin*5;
+			
+
+			tweetW = 200;
+			tweetH = 100;
+
+			xEntentionStart = xGraphEnd + unigap*10
+			var xSentLegendEnd = xGraphStart - unigap*3;
+
+
+
+
+
+			cumDeathsMarkerText = xGraphEnd + unigap*3;
+			
+			//
+			 var coordinates = [0, 0];
+			var activeLine = 0;
+			var allDataCut;
+			var allDataCutPerm;
+			
+			var format = d3.time.format("%d/%m/%Y");
+			
+			var tweetGraph = d3.select("svg");   
+						
+			tweetGraph.attr("width", w)
+						.attr("height", h2);
+			
+			var graphArea = tweetGraph.append("rect")
+							.attr("x", marginLeft)
+                            .attr("y", 0)
+                            .attr("width", w - 100 - marginLeft)
+                            .attr("height", h2)
+							.attr("class", "graphBackground")
+							.on('mousemove', function () {
+  							
+								coordinates = d3.mouse(this);
+								coordinates[0] = coordinates[0]   
+							});
+						
+						
+			cutData = [];
+			cutData1 = [];
+			allDataUncut = [{"data": null, "class": null}, {"data": null, "class": null}];
+			
+			
+		
+			
+			
+			
+			
+			
+			//SCALES	
+			
+			var timeFormat = d3.time.format("%d %b %Y");
+		
+						
+			var xScale = d3.time.scale().range([xGraphStart, xGraphEnd]);
+							
+			var xScaleBrush = d3.time.scale().range([0, xGraphEnd - xGraphStart]);
+			var yScaleBrush = d3.scale.linear().range([brushHeight, 0]);
+			
+			var yScaleDeaths = d3.scale.linear().rangeRound([h, yGraphStart]);
+			
+			var yScaleTweets = d3.scale.linear().rangeRound([0, h/2 - yGraphStart]);
+			var yScaleTweets1 = d3.scale.linear().rangeRound([h/2 - yGraphStart, 0]);
+			
+			//BRUSH
+			
+			var brushTimeScale = d3.time.scale().range([0, w]);
+			
+			var brush = d3.svg.brush()
+				.x( xScaleBrush)
+				
+				.on("brush", brushed);
+
+
+
+			//GROUPS
+			
+			var fokus = tweetGraph.append("g")
+						.attr("class", "fokus");	
+
+
+			
+						
+						
+			// AXES
+			
+			var xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(timeFormat),
+				xAxis2 = d3.svg.axis().scale(xScaleBrush).orient("bottom"),
+				yAxis = d3.svg.axis().scale(yScaleDeaths).orient("right"),
+				yAxisMinor = d3.svg.axis().scale(yScaleDeaths).orient("left").tickSize(unigap/2);
+
+
+
+			/// COLOURS
+
+			var color1 = d3.rgb(92,37,128);
+			var color2 = d3.rgb(76,169, 153);
+			var color3 = d3.rgb(2, 155, 208);
+			var color4 = d3.rgb(131,32,128);
+
+			var colorMagenta = d3.rgb(221, 0, 121);
+			var colorBlue =d3.rgb( 0, 111, 158);
+			var colorWhite = d3.rgb(60,60,60);
+			var colorGray = colorWhite.brighter();
+
+			var color1Darker = color1.darker(8);
+			var color2Darker = color2.darker(8);
+			var color3Darker = color3.darker(8);
+
+
+
+			var colorBlack = d3.rgb("#ddd");
+			var colorBlackBlack = d3.rgb("#FFF");
+			var colorBlackBrighter = colorBlack.brighter(0.5);
+
+			var colorMarkerLine = colorWhite;
+			var markerColor = colorGray;
+
+
+
+
+
+
+			
+			
+			//FUNCTIONS
+
+			function setImgXY(id, x, y)
+			{
+				d3.select(id)
+					.attr("style", "position: absolute; top:" + y + "px; left:" + x + "px;")
+			}
+
+			function showOverlay(id)
+
+			{
+				d3.selectAll(id)
+					.attr("style", "display: block");
+
+			}
+
+			function hideOverlay(id)
+
+			{
+				d3.selectAll(id)
+					.attr("style", "display: none");
+
+			}
+
+			function resize(){
+
+				w1 = parseInt(d3.select("#vizContainer").style('width'))
+				console.log(w1)
+
+
+			}
+
+			
+			
+			
+				
+			
+			function drawContext(da, active){
+				
+				d0 = da[0].data;
+				d1 = da[1].data;
+				
+				console.log(d0);
+				xScaleBrush.domain([d3.min( d1.concat(d0), function(d){
+										return parseInt(d.date)}), 
+									d3.max( d1.concat(d0), function(d){
+										return parseInt(d.date)})
+								]);
+				yScaleBrush.domain([0, d3.max( d1.concat(d0), function(d){
+									return parseInt(d.cumDeaths)})
+								]);
+				
+				
+
+				
+				var tmpH = h + margin*3;
+				var context = tweetGraph.append("g")
+						.attr("class", "context")
+						.attr("transform", "translate(" + xGraphStart + "," + tmpH + ")");
+
+				var contextBcgr = context.append("rect")
+					.attr("x", 0)
+					.attr("y", 0)
+					.attr("height", brushHeight)
+					.attr("width", xGraphEnd - xGraphStart)
+					.attr("fill", colorBlack);
+
+				drawBrushClearButton(xGraphEnd - xGraphStart + unigap*3,0, context)
+						
+				var areas = [];
+				
+				
+				var area = d3.svg.line()
+						.interpolate("monotone")
+						.x(function(d) { return xScaleBrush(parseInt( d.date)); })
+						/*.y0(h2 - margin)*/
+						.y(function(d) { return yScaleBrush( parseInt( d.cumDeaths)); });
+						
+				console.log(da);
+				for ( i = 0; i < da.length; i++){	
+					var line = context.append("path")
+						  .datum(da[i].data)
+						  .attr("class", "context " + da[i].class)
+						  .attr("d", area)
+						  .attr("stroke", colorGray);
+					if (active == i){ 
+						line.attr ("class", "context " + da[i].class + " active")
+						.attr("stroke", colorMagenta);
+					}
+				}
+				
+				
+				context.append("g")
+					  .attr("class", "x brush")
+					  .call(brush)
+					.selectAll("rect")
+					  .attr("y", 0)
+					  .attr("height", brushHeight);
+						
+					/*for ( i = 0; i < da.length; i++){	
+					areas.push(area);}*/
+
+
+				var xAx = context.append("g")
+						  .attr("class", "x axis xAxisContext")
+						  .attr("transform", "translate(0," + brushHeight + ")")
+						  .call(xAxis2)
+						  .selectAll("text")
+						  	.attr("fill", colorBlue);
+					
+					d3.selectAll(".xAxisContext").selectAll("path")
+						.attr("stroke", colorBlue);
+
+				
+				
+				
+				}
+
+			function drawBrushClearButton(x,y, parent){
+
+				
+				var brushCloseButton = parent.append("g")
+					  .attr("class", "brushButton")
+					   .attr("transform", "translate(" +  x +"," +  y + ")");
+
+				/*brushCloseButton.append("rect")
+					.attr("width", unigap*8)
+					.attr("height", unigap*3)
+					.attr("fill", colorWhite);*/
+
+				var brushCloseText = brushCloseButton.append("text")
+					.attr("class", "brushCloseText")
+					.attr("x", 0)
+					.attr("y", brushHeight)
+					.attr("fill", colorWhite)
+					
+					.attr("fill", colorWhite)
+					.text("Reset zoom")
+					.on("click", function() {
+						d3.selectAll(" .brush").call(brush.clear());
+						brushed();
+						console.log("click");
+
+
+					});
+
+
+
+
+			}
+				
+			function brushed(){
+				
+				allDataCut =  brush.empty() ? timeExtractArray( base, currentTime, allDataUncut) : timeExtractArray(brush.extent()[0], brush.extent()[1], allDataUncut) ;	
+				console.log(allDataUncut); 
+				console.log(allDataCut);
+				
+				xScale.domain([d3.min( allDataCut[0].data, function(d){
+										return parseInt(d.date)}), 
+									d3.max( allDataCut[0].data, function(d){
+										return parseInt(d.date)})
+								]);
+
+				xAxis.ticks((allDataCut.length > 7) ? 7 : allDataCut.length) ;
+
+				
+				
+				
+				
+				
+				console.log(brush.extent());
+				
+				tweetGraph.selectAll(".fokus").selectAll("*").remove();
+
+				drawActiveEvent(allDataCut, xScale, yScaleDeaths,yScaleTweets, w, activeLine);
+									for(var i = 0; i< allDataCut.length; i++){
+										
+										if (i != activeLine){
+											drawInactiveEvent(allDataCut, xScale, yScaleDeaths,yScaleTweets, w, i);
+										}
+									}
+				drawAxis(allDataCut,activeLine);
+				
+				
+				
+				
+				
+				}
+
+
+
+			function tooSmall (textFunction, parent, x, y, right, up, width, height){
+				var x2 = right ? x + width/2 : x - width/2; 
+				var y2 = y;
+				var x3 = right ? x + width : x - width; 
+				var y3 = up ? y - height : y + height;
+				dada1 = [{"x": x, "y": y}, {"x": x2, "y": y2}, {"x": x3, "y": y3}];
+				drawLine(dada1, parent, 400, 0, "extensionTooSmall", 2, 0, colorWhite);
+				
+				var sign = right? 1 : -1;				
+				textFunction(x3 + sign *unigap/2,y3,parent);
+			}
+
+
+
+			
+			
+			
+			
+		
+			
+			
+			function drawSegmentedArea(areaFunc, d, cl, col, sent, thisnum)
+			
+			{
+				
+				var col2 = col.darker(0.5);
+				fokus.append("path")
+                            .attr("d", areaFunc(d))
+                            /*.attr("stroke", "blue")
+                            .attr("stroke-width", 0)*/
+                            .attr("fill", col)
+							.attr("class", cl)
+							.on('click', function () {
+  							
+								coordinates = d3.mouse(this);
+								var thisClass = d3.select(this).attr("class"); 
+
+								var myTime = xScale.invert(coordinates[0]).getTime();
+								var tInterval = xScale.invert(500).getTime() - xScale.invert(499).getTime();
+								var myRandomTime = myTime + (Math.random() - 0.5) * tInterval
+
+
+								console.log(myRandomTime);
+								var myTweet = getTweetsByTimeSent (myRandomTime, events[thisnum],sent, 0.2); 
+								console.log(myTweet);
+
+
+							});
+							
+				for(i = 0; i< d.length - 1; i+=2)
+				{
+					var p = [d[i], d[i+1]];
+					//console.log(p);
+					fokus.append("path")
+                            .attr("d", areaFunc(p))
+                            /*.attr("stroke", "blue")
+                            .attr("stroke-width", 0)*/
+                            .attr("fill", col2)
+							.attr("class", cl+" segment")
+							.on('click', function () {
+  							
+								coordinates = d3.mouse(this);
+								var thisClass = d3.select(this).attr("class"); 
+
+								var myTime = xScale.invert(coordinates[0]).getTime();
+								var tInterval = xScale.invert(500).getTime() - xScale.invert(499).getTime();
+								var myRandomTime = myTime + (Math.random() - 0.5) * tInterval
+
+								var textOut = function (d) {
+
+
+
+
+									console.log("callback");
+
+									fokus.selectAll(".tweetTextsGroup").remove();
+
+									d3.selectAll(".activeMarker").selectAll("*").remove(); 
+
+									var tweetTextsGroup = fokus.append("g")
+										.attr("class", "tweetTextsGroup");
+
+
+									var x1 = (coordinates[0] > xGraphEnd *2 / 3) ? coordinates [0] - (xGraphEnd - xGraphStart)/ 10 : coordinates[0] + (xGraphEnd - xGraphStart)/ 10;
+									var y1 = (coordinates[1] > yGraphEnd / 2 ) ? coordinates [1] - (yGraphEnd - yGraphStart)/ 4 : coordinates[1] + (yGraphEnd - yGraphStart)/ 4;
+									
+
+
+									var lineCoords = [{"x": coordinates[0], "y": coordinates[1]}, {"x": x1, "y": y1}];
+									drawLine(lineCoords, tweetTextsGroup, 500, 0, "tweetLine", 3, 0, colorWhite);
+
+
+									var x2 = (coordinates[0] > xGraphEnd *2 / 3) ? x1 - tweetW : x1;
+									var y2 = (coordinates[1] > yGraphEnd / 2 ) ?  y1 - tweetH : y1;
+									
+
+									var tweetBcgr = tweetTextsGroup.append("rect")
+										.transition()
+										.duration(0)
+										.delay(1000)
+
+										.attr("x", x2)
+										.attr("y", y2)
+										.attr("width", tweetW)
+										.attr("height", tweetH)
+										.attr("fill", colorBlack);	
+									var tweetSentMarker = tweetTextsGroup.append("rect")
+										.transition()
+										.duration(0)
+										.delay(1000)
+										.attr("x", x2)
+										.attr("y", y2+tweetH - unigap/2)
+										.attr("width", tweetW)
+										.attr("height", unigap/2)
+										.attr("fill", col)
+										.each("end", function  () {
+
+												tweetTextsGroup.append("foreignObject")
+										
+												.attr("x", x2 + unigap/2)
+												.attr("y", y2 + unigap/2 )
+											    .attr("width", tweetW - unigap)
+											    .attr("height", tweetH - unigap)
+											    .attr("class", "tweetText")
+											  	.append("xhtml:div")
+											    .html(d.tweetText);
+
+											// body...
+										});
+
+
+
+								
+
+
+
+								}
+								console.log(myRandomTime);
+								var myTweet = getTweetsByTimeSent (myRandomTime, events[thisnum],sent, 0.2, textOut );
+
+
+
+
+								
+
+
+
+
+
+
+							});
+					
+					}
+				
+				}
+			
+			function drawLine(dada1, parent, transition, dela, cl, cBr, cEr, col)
+			{ 
+					
+					
+					var thisLine = d3.svg.line()
+                          .x(function(d) { return d.x; })
+                          .y(function(d) { return d.y; })
+						  .interpolate("linear");
+						  
+					
+					var nDada = [dada1[0]];
+
+					for( i = 1; i< dada1.length; i++)
+					{
+						nDada.push(dada1[0]);
+
+					}
+
+					console.log(nDada);
+
+
+
+
+								
+					var pa = parent.append("path")
+                            .attr("d", thisLine(nDada))
+							.attr("class", cl + " line")
+							.attr("stroke", col)
+							.attr("fill", "none");
+
+
+					for( i = 1; i< dada1.length; i++)
+					{
+						for( j = i; j< dada1.length; j++)
+						{
+							nDada.splice(j,1,dada1[i]);
+
+						}
+
+						
+						pa.transition()
+							.delay(dela + i*transition/(dada1.length -1))
+							.duration(transition/(dada1.length -1))
+							.attr("d", thisLine(nDada));
+					}	
+
+					parent.append("circle")
+						.transition()
+						.delay(dela + transition)
+						.attr("cx", dada1[dada1.length-1].x)
+						.attr("cy", dada1[dada1.length -1].y)		
+						.attr("r", cEr)
+						.attr("class", cl + " circle endCircle")
+						.attr("fill", col);
+
+
+					parent.append("circle")
+						.transition()
+						.delay(dela)
+						.attr("cx", dada1[0].x)
+						.attr("cy", dada1[0].y)		
+						.attr("r", cBr)
+						.attr("class", cl + " circle beginCircle")
+						.attr("fill", col);	
+
+			}
+			
+			
+			function drawMarkers (d)
+			{
+				
+				var xOrdS = d3.scale.ordinal()
+					.domain(d3.range(d.length - 1))
+					.rangeBands([xGraphStart, xGraphEnd]);
+				
+				var markers = fokus.append("g")
+							.attr("class", "markersGroup");
+							
+				var activeMarkers =  fokus.append("g")
+							.attr("class", "activeMarker");
+				
+				var activeRect = activeMarkers.append("rect");
+				
+				var markerInfo = activeMarkers.append("g")
+						.attr("class", "markerInfo");
+
+
+				
+
+
+
+							
+				
+				
+				markers.selectAll("rect")
+					.data(d)
+					.enter()
+					.append("rect")
+					.attr("x", function(d, i) {
+      					return xOrdS(i);         // <-- Set x values
+   					})
+					.attr("class", "marker")
+					.attr("width", xOrdS.rangeBand())
+					.attr("y", h0)
+				   .attr("height", yGraphEnd)
+				    .attr("opacity", 0)
+				   .on("click", function() {
+
+				   		console.log("click")
+					   
+					   	activeMarkers.moveToFront();
+					  	markerInfo.selectAll("*").remove(); 
+					  	d3.selectAll(".tweetTextsGroup").selectAll("*").remove(); 
+					  
+					   	markers.selectAll("rect")
+					    	.attr("opacity", 0);
+						var thisMarker = d3.select(this);
+
+						var thisData = thisMarker[0][0].__data__; 
+
+				   		var x = xScale(parseInt(thisData.date));
+						var y = yScaleDeaths(parseInt(thisData.cumDeaths));
+						//console.log(thisMarker[0][0].__data__);
+
+						
+
+
+						if (activeMarkers.selectAll("rect").empty()){
+
+							
+							activeRect = activeMarkers.append("rect");
+				
+							markerInfo = activeMarkers.append("g")
+								.attr("class", "markerInfo");
+
+							console.log("empty00");
+
+
+						}
+
+						
+						
+						activeMarkers.selectAll("rect")
+								.attr("opacity", 0.5)
+								.transition()
+								.duration(1000)
+								.attr("x",  thisMarker.attr("x"))
+								.attr("class", "marker")
+								.attr("width", thisMarker.attr("width"))
+								.attr("y", thisMarker.attr("y"))
+							   	.attr("height", thisMarker.attr("height"))
+							   	.attr("fill", markerColor)
+							   	.each("end", function(){
+
+
+
+							   	
+
+
+
+
+
+
+									
+
+									var markerText = markerInfo.append("g")
+									 .attr("transform", "translate(" +  (x + parseInt(thisMarker.attr("width"))) +"," +  (margin + unigap) + ")");
+
+
+									var format1 = d3.time.format("%d %b %Y");
+									var myDate = new Date(thisData.date);
+									var dayString = format1(myDate);
+
+							   		var todayDate  = markerText.append("text")
+							   			.attr("x", unigap )
+										.attr("y",0)
+										.attr("class", "markerInfo" + " date")
+										.attr("dominant-baseline",  "top")
+										.attr("fill", colorBlue)
+										.text(dayString);
+
+									var deathsTextWidth = 0;
+									var deathsText = markerText.append("text")
+										.transition()
+										.duration(1)
+										.delay(160)
+										.attr("x", unigap)
+										.attr("y", unigap*4)
+										.attr("class", "markerInfo" + " deaths")
+										.attr("fill", colorMagenta)
+										.text(parseInt(thisData.deaths)) 
+										.each("end", function(){
+
+										   		deathsTextWidth = parseInt(this.getBBox().width);
+										   		deathsTextHeight = parseInt(this.getBBox().height);
+										   		deathsTextY = parseInt(this.getBBox().y);
+
+
+										   		markerText.append("text")
+													
+													.attr("x", unigap + unigap/2 + deathsTextWidth)
+													.attr("y", deathsTextY  + deathsTextHeight/4 *2)
+													.attr("class", "markerInfo" + " legend")
+													.attr("fill", colorGray)
+													
+													.text("Dead");
+
+												 markerText.append("text")
+													
+													.attr("x", + unigap + unigap/2 + deathsTextWidth)
+													.attr("y", deathsTextY + deathsTextHeight/4*3 + 3)
+													.attr("class", "markerInfo" + " legend")
+													.attr("fill", colorGray)
+													
+													.text("this day");
+
+													console.log("!!!!!!!!!!!" + deathsTextWidth);
+
+													var tweetText = markerText.append("text")
+														.attr("x", unigap )
+														.attr("y",deathsTextY + deathsTextHeight + unigap)
+														.attr("class", "markerInfo" + " tweets")
+														.attr("fill", colorWhite)
+														.text(parseInt(thisData.totalTweets) + " tweets");
+
+
+													
+
+													if (parseInt(thisData.deaths) != 0) {
+
+														var man = markerText.append("use")
+
+													   .attr("xlink:href","#manSymbol")
+													   .attr("transform", "translate(" + (deathsTextWidth + 100) + "," + (unigap*5 - deathsTextHeight) + ") scale(0.45)");
+
+														var tplToday = Math.round(parseInt(thisData.totalTweets) / parseInt(thisData.deaths) *100)/100;
+
+														man.attr("class", "markerTextMan")
+														
+														manHeight = parseInt(man.node().getBBox().height);
+														manY = parseInt(man.node().getBBox().y);
+
+														d3.select("#manSymbol").selectAll("*")
+															.attr("fill", colorMagenta);
+
+
+														markerText.append("text")
+														.attr("x", deathsTextWidth + 115)
+														.attr("y", unigap*4.5 - deathsTextHeight + manHeight/2 )
+														.attr("class", "markerInfo" + " tplToday")
+														.attr("fill", colorMagenta)
+														
+														.text(" = " + tplToday + " tweets");
+													}; 
+
+
+												 
+
+										   });
+
+
+
+							   		
+
+
+
+
+									// LINES
+								
+									var lineDada = [{"x": x, "y": y},{"x": cumDeathsMarkerText, "y": y}];
+
+								
+
+									drawLine(lineDada, markerInfo, 1000, 0, "deathsMarkerLine", 0, 3, colorMagenta);	
+
+
+
+									var cumDeathsText = markerInfo.append("text")
+										.transition()
+										.duration(1)
+										.delay(1000)
+										.attr("x", cumDeathsMarkerText + unigap)
+										.attr("y", y)
+										.attr("class", "markerInfo" + " cumDeaths")
+										.attr("fill", colorMagenta)
+										
+										.text(parseInt(thisData.cumDeaths));
+
+									markerInfo.append("text")
+										.transition()
+										.duration(1)
+										.delay(1000)
+										.attr("x", cumDeathsMarkerText + unigap)
+										.attr("y", y+15)
+										.attr("class", "markerInfo" + " cumDeaths subline")
+										.attr("fill", colorGray)
+										
+										.text("dead since");
+
+									markerInfo.append("text")
+										.transition()
+										.duration(1)
+										.delay(1000)
+										.attr("x", cumDeathsMarkerText + unigap)
+										.attr("fill", colorGray)
+										.attr("y", y+25)
+										.attr("class", "markerInfo" + " cumDeaths subline")
+										.text("beginning");
+
+
+
+										var xSentLegendStart = 	x; 
+										
+										
+
+										var ySentNeg =  y;	
+										var lineDada1 = [{"x": xSentLegendStart, "y": ySentNeg},{"x": xSentLegendEnd, "y": ySentNeg}];
+										drawLine(lineDada1, markerInfo, 1000, 0, "sentMarkerLine neg", 0, 0, colorMarkerLine);
+
+										var ySentNeg =  y - yScaleTweets(parseInt(thisData.neg));	
+										var lineDada2 = [{"x": xSentLegendStart, "y": ySentNeg},{"x": xSentLegendEnd, "y": ySentNeg}];
+										drawLine(lineDada2, markerInfo, 1000, 200, "sentMarkerLine neu", 0, 0, colorMarkerLine);
+
+
+										var ySentNeg =  y - yScaleTweets(parseInt(thisData.neg)) - yScaleTweets(parseInt(thisData.neu));	
+										var lineDada3 = [{"x": xSentLegendStart, "y": ySentNeg},{"x": xSentLegendEnd, "y": ySentNeg}];
+										drawLine(lineDada3, markerInfo, 1000, 400, "sentMarkerLine pos", 0, 0, colorMarkerLine);
+										var ySentNeg =  y - yScaleTweets(parseInt(thisData.totalTweets));	
+										var lineDada3 = [{"x": xSentLegendStart, "y": ySentNeg},{"x": xSentLegendEnd, "y": ySentNeg}];
+										drawLine(lineDada3, markerInfo, 1000, 600, "sentMarkerLine tot", 0, 0, colorMarkerLine);
+
+										var sentGraphGroup = markerInfo.append("g")
+												.attr("class", "sentGraphGroup");
+
+										var curSentData = [{"sentiment": "negative", "amount": parseInt(thisData.neg), "color": color1}, {"sentiment": "neutral", "amount":parseInt(thisData.neu), "color": color3}, {"sentiment": "positive", "amount":parseInt(thisData.pos), "color": color2}];
+
+										sentGraphGroup.selectAll("rect")
+											.data(curSentData)
+											.enter()
+											.append("rect")
+											.attr("width", unigap*3)
+											.attr("x", xSentLegendEnd - unigap*3)
+											.attr("y", function(d, i){
+
+												var yC = 0
+												console.log(i);
+
+												for(j = 0; j <= i; j ++){
+													yC +=  curSentData[j].amount;
+												}
+
+												return y - yScaleTweets (yC);
+											})
+											.attr("height", 0)
+											.attr("class", function(i){return i;})
+											.attr("fill",  function  (d) {
+												return d.color;
+											});
+
+										sentGraphGroup.selectAll("rect")
+											.data(curSentData)
+												
+											.transition()
+											.duration(500)
+											.delay(function(d,i){ return i*300 + 2000;})
+											.attr("height", function(d){
+												return yScaleTweets(d.amount);
+											})
+											.each("end", function(d, ii){
+												var thisE = d3.select(this);
+
+												/*tooSmall (textFunction, parent, x, y, right, up, width, height)*/
+												var sentTxt = function(lx, ly, parent)
+												{
+													parent.append("text")
+													.attr("x", lx)
+													.attr("y",  ly)
+													.attr("class", "sentGraphText")
+													.attr("dominant-baseline",  "middle")
+													.attr("fill", d.color.darker(1))
+													.attr("text-anchor", "end")
+													.text(d.amount + " | " + Math.round(d.amount / parseInt(thisData.totalTweets)*1000)/10 + "%");
+
+													parent.append("text")
+													.attr("x", lx )
+													.attr("y",  ly + 10)
+													.attr("class", "sentGraphText")
+													.attr("dominant-baseline",  "middle")
+													.attr("text-anchor", "end")
+													.attr("fill", colorWhite)
+													.text( d.sentiment + " tweets");
+												}
+
+												if (parseInt(thisE.attr("height")) > 15) {
+
+													sentTxt(parseInt(thisE.attr("x")) - unigap / 2 , parseInt(thisE.attr("y")) + parseInt(thisE.attr("height"))/2, sentGraphGroup);
+												}
+												else {
+													if (ii == 0 ) 
+														{
+																											console.log("ii   " + ii );
+
+															tooSmall (sentTxt, sentGraphGroup, parseInt(thisE.attr("x")) + parseInt(thisE.attr("width")) /2 , parseInt(thisE.attr("y")) + parseInt(thisE.attr("height"))/2, false, false, 70, 30);
+
+														}
+														if (ii == 1 ) 
+														{tooSmall (sentTxt, sentGraphGroup, parseInt(thisE.attr("x")) + parseInt(thisE.attr("width")) /2 , parseInt(thisE.attr("y")) + parseInt(thisE.attr("height"))/2, false, true, 70, 0);}
+														if (ii == 2  )
+														{
+
+															tooSmall (sentTxt, sentGraphGroup, parseInt(thisE.attr("x")) + parseInt(thisE.attr("width")) /2 , parseInt(thisE.attr("y")) + parseInt(thisE.attr("height"))/2, false, true, 70, 30);
+
+
+														}
+												}
+
+												
+
+												/*
+												sentGraphGroup.append("text")
+													.attr("x", parseInt(thisE.attr("x")) - unigap / 2 )
+													.attr("y",  parseInt(thisE.attr("y")) + parseInt(thisE.attr("height"))/2)
+													.attr("class", "sentGraphText")
+													.attr("dominant-baseline",  "middle")
+													.attr("text-anchor", "end")
+													.attr("fill", d.color.brighter(2))
+													.text(Math.round(d.amount / parseInt(thisData.totalTweets)*1000)/10 + "%");
+
+													*/
+
+
+
+
+												});
+
+
+
+
+									/*
+
+									var xSentLegendStart = 	x +  parseInt(thisMarker.attr("width"))/2; 
+									var xSentLegendMid = (x > w/2) ? xSentLegendStart + 100 :  xSentLegendStart + 100;
+									var xSentLegendEnd = (x > w/2) ? xSentLegendStart + 200 :  xSentLegendStart + 200;
+
+									var ySentNeg =  y - yScaleTweets(parseInt(thisData.neg))/2;	
+									var lineDada1 = [{"x": xSentLegendStart, "y": ySentNeg},{"x": xSentLegendMid, "y": ySentNeg-50},{"x": xSentLegendEnd, "y": ySentNeg-50}];
+
+									
+
+									drawLine(lineDada1, markerInfo, 1000, 0, "sentMarkerLine neg", 3, 0);
+
+									var negText = markerInfo.append("text")
+										.transition()
+										.duration(1)
+										.delay(1500)
+										.attr("x",  xSentLegendEnd + unigap/2 )
+										.attr("y", ySentNeg-50)
+										.attr("class", "markerInfo" + " sent neg")
+										.text(thisData.neg + " negative tweets") 
+
+									
+
+									var ySentNeg =  y - yScaleTweets(parseInt(thisData.neg)) - yScaleTweets(parseInt(thisData.neu))/2 ;	
+									var lineDada2 = [{"x": xSentLegendStart, "y": ySentNeg},{"x": xSentLegendMid, "y": ySentNeg-50},{"x": xSentLegendEnd, "y": ySentNeg-50}];
+
+									
+
+									drawLine(lineDada2, markerInfo, 1000, 200, "sentMarkerLine neu", 3, 0);
+									var negText = markerInfo.append("text")
+										.transition()
+										.duration(1)
+										.delay(1700)
+										.attr("x",  xSentLegendEnd + unigap/2 )
+										.attr("y", ySentNeg-50)
+										.attr("class", "markerInfo" + " sent neu")
+										.text(thisData.neu + " neutral tweets") 
+
+
+									var ySentNeg =  y - yScaleTweets(parseInt(thisData.neg)) - yScaleTweets(parseInt(thisData.neu)) - yScaleTweets(parseInt(thisData.pos))/2 ;	
+									var lineDada3 = [{"x": xSentLegendStart, "y": ySentNeg},{"x": xSentLegendMid, "y": ySentNeg-50},{"x": xSentLegendEnd, "y": ySentNeg-50}];
+
+									
+
+									drawLine(lineDada3, markerInfo, 1000, 400, "sentMarkerLine pos", 3, 0);
+
+									var negText = markerInfo.append("text")
+										.transition()
+										.duration(1)
+										.delay(1900)
+										.attr("x",  xSentLegendEnd + unigap/2 )
+										.attr("y", ySentNeg-50)
+										.attr("class", "markerInfo" + " sent pos")
+										.text(thisData.pos + " positive tweets");
+
+									*/
+
+
+
+
+
+
+
+
+												//AXIS TWEETS
+
+												
+
+												tweetAxis = d3.svg.axis().scale(yScaleTweets1).orient("left").ticks(2);
+
+
+												tweetAxisGroup = markerInfo.append("g")
+												  .attr("class", "tweetAxis axis")
+												  .attr("transform", "translate(" +  x +"," + y + ")")
+
+												  .call(tweetAxis);
+
+
+
+												var tweetAxisH = parseInt(tweetAxisGroup.select(".domain").node().getBBox().height);
+
+												var yTrans = y - tweetAxisH; 
+
+												tweetAxisGroup.attr("transform", "translate(" +  x +"," + yTrans + ")")
+
+												  .selectAll("text")
+												  	.attr("x", function() {
+
+												  		return	(thisMarker.attr("width") > 20) ? -4 : -4 ; 
+
+												  	})
+												  	.attr("y", 7);
+
+
+												tweetAxisGroup2 = markerInfo.append("g")
+													  .attr("class", "min")
+													  .attr("transform", "translate(" +  x +"," + yTrans + ")")
+													  .call(d3.svg.axis().scale(yScaleTweets1).orient("right").ticks(10))
+													  .selectAll("text")
+													  	.attr("display", "none");
+
+												tweetAxisGroup2.selectAll("path.domain")
+													  	.attr("display", "none");
+
+
+
+
+												/// PIE CHART VARS
+
+
+												var pieGroup = markerInfo.append("g")
+													.attr("class", "pie");
+
+
+
+												pieGroup.append("g")
+													.attr("class", "pieSlices");
+												pieGroup.append("g")
+													.attr("class", "pieLabels");
+												pieGroup.append("g")
+													.attr("class", "pieLines");
+
+												var pieWidth = 250,
+												    pieHeight = 100,
+													pieR = Math.min(pieWidth, pieHeight) / 2;
+
+												var pie = d3.layout.pie()
+													.sort(null)
+													.value(function(d) {
+														return d.value;
+													});
+
+												var arc = d3.svg.arc()
+													.outerRadius(pieR * 0.8)
+													.innerRadius(pieR * 0.4);
+
+												var outerArc = d3.svg.arc()
+													.innerRadius(pieR * 0.9)
+													.outerRadius(pieR * 0.9);
+
+
+
+												var pieData = [{"value": "1", "color": color4, "text": "Retweets"} , {"value":"1", "color": color2, "text": "Original tweets"}];
+												console.log(pieData);
+
+												var colorKey = function(d){ return d.data.color; };
+												var txt = function(d){ return d.data.text; };
+
+												d3.selectAll(".pie").attr("transform", "translate(" + (x - pieWidth / 2)  + "," + pieHeight / 2 + ")");
+												
+												//DRAW PIECHART
+
+												change(pieData);
+
+
+												var pieData = [{"value": parseInt(thisData.rTs), "color": color4, "text": "Retweets"} , {"value":parseInt(thisData.nonRTs), "color": color2, "text": "Original tweets"}];
+
+												change(pieData);
+
+												function change(data) {
+
+													/* ------- PIE SLICES -------*/
+													var slice = markerInfo.select(".pieSlices").selectAll("path.slice")
+														.data(pie(pieData), colorKey, txt);
+
+													slice.enter()
+														.insert("path")
+														.attr("fill", function (d) {
+															console.log(d.color);
+															return d.data.color;
+															
+														})
+														.attr("class", "slice");
+
+													slice		
+														.transition().duration(1000)
+														.attrTween("d", function(d) {
+															this._current = this._current || d;
+															var interpolate = d3.interpolate(this._current, d);
+															this._current = interpolate(0);
+															return function(t) {
+																return arc(interpolate(t));
+															};
+														})
+
+													slice.exit()
+														.remove();
+
+													/* ------- TEXT LABELS -------*/
+
+													var text = markerInfo.select(".pieLabels").selectAll("text")
+														.data(pie(pieData), colorKey, txt);
+
+													text.enter()
+														.append("text")
+														.attr("dy", ".35em")
+
+														.text(function(d) {
+															return d.data.text;
+														});
+													
+													function midAngle(d){
+														return d.startAngle + (d.endAngle - d.startAngle)/2;
+													}
+
+													text.transition().duration(1000)
+														.attrTween("transform", function(d) {
+															this._current = this._current || d;
+															var interpolate = d3.interpolate(this._current, d);
+															this._current = interpolate(0);
+															return function(t) {
+																var d2 = interpolate(t);
+																var pos = outerArc.centroid(d2);
+																pos[0] = pieR * (midAngle(d2) < Math.PI ? 1 : -1);
+																return "translate("+ pos +")";
+															};
+														})
+														.styleTween("text-anchor", function(d){
+															this._current = this._current || d;
+															var interpolate = d3.interpolate(this._current, d);
+															this._current = interpolate(0);
+															return function(t) {
+																var d2 = interpolate(t);
+																return midAngle(d2) < Math.PI ? "start":"end";
+															};
+														});
+
+													text.exit()
+														.remove();
+
+													/* ------- SLICE TO TEXT POLYLINES -------*/
+														
+													var polyline = markerInfo.select(".pieLines").selectAll("polyline")
+														.data(pie(pieData), colorKey, txt);
+													
+													polyline.enter()
+														.append("polyline")
+															.attr("fill", "none")
+															.attr("stroke",  function (d) {
+															
+																return d.data.color;
+															
+															})
+
+													polyline.transition().duration(1000)
+														.attrTween("points", function(d){
+															this._current = this._current || d;
+															var interpolate = d3.interpolate(this._current, d);
+															this._current = interpolate(0);
+															return function(t) {
+																var d2 = interpolate(t);
+																var pos = outerArc.centroid(d2);
+																pos[0] = pieR * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
+																return [arc.centroid(d2), outerArc.centroid(d2), pos];
+															};			
+														});
+													
+													polyline.exit()
+														.remove();
+												};
+
+
+
+										  
+
+
+									
+
+
+									
+
+
+
+
+
+
+
+							   });
+					
+					  	
+						
+						//DRAW NUMBERS
+						
+						
+						
+						
+						
+
+
+						
+							   
+							
+						
+						
+						
+						//var thisMarkerClone = clone_d3_selection(thisMarker, 1);
+						
+						//thisMarkerClone.attr("opacity", 0.7);
+						
+						//console.log(thisMarkerClone.attr("opacity"));
+						 
+						/*activeMarkers.append(function() {
+							  return thisMarkerClone.node();
+							});*/
+						
+					   
+					   });
+					
+				}
+				
+			
+			
+			function drawActiveEvent(da, xS, ySd, ySt, out, thisnum)
+			
+			{
+				dada = da[thisnum].data;
+				cl = da[thisnum].class;
+				// SVG
+			
+			
+			
+							
+							
+							
+			// ADD MARKERS
+			
+				drawMarkers(dada);
+							
+			
+			// DRAW TWEETS CALCULATIONS
+                           
+			
+			
+			var totalTweetsArea = d3.svg.area()
+                          .x(function(d,i) {return xS(parseInt(d.date));})
+                          .y0(function(d) { return ySd(parseInt( d.cumDeaths)); })
+						  .y1(function(d) { return ySd(parseInt( d.cumDeaths)) - ySt(parseInt( d.totalTweets)) ; })
+						  .interpolate("linear");
+						  
+			
+			//drawSegmentedArea(totalTweetsArea, dada, cl + " totalTweets");
+			
+			
+							
+			
+			// SENTIMENTS
+			
+				var negTweetsArea = d3.svg.area()
+                          .x(function(d,i) { return xS(parseInt(d.date)); })
+                          .y0(function(d) { return ySd(parseInt( d.cumDeaths)); })
+						  .y1(function(d) { return ySd(parseInt( d.cumDeaths)) - ySt(parseInt( d.neg)) ; })
+						  .interpolate("linear");
+						  
+				
+				var neuTweetsArea = d3.svg.area()
+                          .x(function(d,i) { return xS(parseInt(d.date));})
+                          .y0(function(d) {  return ySd(parseInt( d.cumDeaths)) - ySt(parseInt( d.neg)) ; })
+						  .y1(function(d) { return  ySd(parseInt( d.cumDeaths)) - ySt(parseInt( d.neg))  - ySt(parseInt( d.neu)) ; })
+						  .interpolate("linear");
+				
+				var posTweetsArea = d3.svg.area()
+                          .x(function(d,i) { return xS(parseInt(d.date));})
+                          .y0(function(d) { return  ySd(parseInt( d.cumDeaths)) - ySt(parseInt( d.neg))  - ySt(parseInt( d.neu)) ; })
+						  .y1(function(d) { return ySd(parseInt( d.cumDeaths)) - ySt(parseInt( d.neg))  - ySt(parseInt( d.neu)) - ySt(parseInt( d.pos)) ; })
+						  .interpolate("linear");
+						  
+						  
+				drawSegmentedArea(negTweetsArea, dada, "negTweets", color1, "neg", thisnum);
+				drawSegmentedArea(neuTweetsArea, dada, "neuTweets", color3, "neu", thisnum);
+				drawSegmentedArea(posTweetsArea, dada, "posTweets", color2, "pos", thisnum);
+
+
+
+				var deathsLine = d3.svg.line()
+	                          .x(function(d,i) { return xS(parseInt( d.date)); })
+	                          .y(function(d) { return ySd(parseInt( d.cumDeaths)); })
+							  .interpolate("linear");
+				
+				fokus.append("path")
+	                            .attr("d", deathsLine(dada))
+								.attr("class", cl + " deathsCum active")
+								.attr("stroke", colorMagenta);
+								
+								
+				//Draw EXTENSION LINE
+				
+						
+						var outLineList = [ [  xGraphEnd ,  ySd(parseInt(dada[dada.length - 1].cumDeaths)) ],[ xEntentionStart,   ySd(parseInt(dada[dada.length - 1].cumDeaths))] ];
+						
+						console.log(dada[dada.length - 1]);
+						
+						var outLine = d3.svg.line()
+	                          .x(function(d,i) { return d[0]; })
+	                          .y(function(d) { return d[1]; })
+							  .interpolate("linear");
+							  
+						
+				
+						fokus.append("path")
+	                            .attr("d", outLine(outLineList))
+								.attr("class", cl + " deathsCum active outline")
+								.attr("stroke", colorGray);
+
+						fokus.append("circle")
+							.attr("cx", xEntentionStart)
+							.attr("cy", ySd(parseInt(dada[dada.length - 1].cumDeaths)))
+							.attr("r", 3)
+							.attr("fill", colorWhite);
+
+
+
+					fokus.append("text")
+							.attr("x", xEntentionStart+ unigap * 2 )
+							.attr("y",  ySd(parseInt(dada[dada.length - 1].cumDeaths)))
+							.attr("dominant-baseline", "middle")
+							.attr("class", cl + " deathsCum active text")
+							.attr("fill", colorWhite)
+							
+							.text(cl.toUpperCase());
+
+
+					 drawTpl(dada, fokus, xEntentionStart + unigap * 2 ,  ySd(parseInt(dada[dada.length - 1].cumDeaths)) + unigap*1);
+
+					 // DRAW HELP
+
+					 setImgXY("#img1", xGraphStart + 300, yGraphStart +unigap*10);
+					 setImgXY("#img2", outLineList[1][0] + 90, outLineList[1][1] - 120);
+					 setImgXY("#img4", 120, 350);
+					 setImgXY("#img3",  xS(parseInt(dada[2].date)) + 200,  ySd(parseInt(dada[2].cumDeaths))-200);
+					 setImgXY("#img5",100, window.innerHeight - 100);
+					  setImgXY("#img6",outLineList[1][0] + 150, window.innerHeight - 130);
+				
+				
+				}
+
+
+					
+				
+				function drawAxis (d, thisnum) {
+
+					dada = d[thisnum].data;
+
+					console.log(" axis");
+					console.log(dada);
+					yAxisMinor.tickSize(unigap/2)
+    
+   						 .orient("left");
+
+
+
+					/// AXIS
+
+					xAxis.ticks((dada.length > 7) ? 7 : d3.time.days) ;
+
+					yAxis.ticks(4);
+					yAxisMinor.ticks(15);
+
+					var xAx = fokus.append("g")
+						  .attr("class", "x axis xAxis")
+						  .attr("transform", "translate(0," + h + ")")
+						  .call(xAxis)
+						  .selectAll("text")
+						  	.attr("fill", colorBlue);
+					d3.selectAll(".xAxis").selectAll("path")
+						.attr("stroke", colorBlue);
+					
+					var yAx = fokus.append("g")
+						  .attr("class", "y axis")
+						  .attr("transform", "translate(" + (xGraphEnd+unigap*2) + ",0)")
+						  .call(yAxis)
+						  .selectAll("text")
+						  	.attr("fill", colorMagenta);
+
+					yAx.selectAll("line")
+								.attr("stroke", colorMagenta);
+					yAx.selectAll("text")
+						.attr("dx", -unigap/2)
+						.attr("dy", 0)
+						.attr("fill", colorMagenta);
+
+
+
+
+
+					var yAx2 = fokus.append("g")
+						  .attr("class", "y axis minor")
+						  .attr("transform", "translate(" + (xGraphEnd+unigap*2) + ",0)")
+						  .call(yAxisMinor)
+						  
+						 .selectAll("line")
+								.attr("stroke", colorMagenta)
+								.attr("stroke-width", 1);
+
+					yAxisMinor.tickSize(xGraphEnd - xGraphStart + unigap*2)
+    
+   						 .orient("left");
+
+					var yAx3 = fokus.append("g")
+						  .attr("class", "y axis minor grid")
+						  .attr("transform", "translate(" + (xGraphEnd+unigap*2) + ",0)")
+						  .call(yAxisMinor)
+						  
+						 .selectAll("line")
+								.attr("stroke", colorBlack)
+								.attr("stroke-dasharray" , "2,2")
+								.attr("stroke-width", 1);
+
+
+					d3.selectAll(".grid").moveToBack();
+
+
+
+
+					d3.selectAll(".minor").selectAll("text")
+							.attr("display", "none");	
+					console.log("sekec");
+					console.log(d3.selectAll(".minor").selectAll("line").node());
+						
+					console.log()
+					
+					fokus.append("text")
+						.attr("x", xGraphEnd + unigap*3)
+						.attr("y", d3.select(".minor").node().getBoundingClientRect()["top"])
+						.attr("dominant-baseline", "top")
+						.attr("class", cl + " yAxis label")
+						.attr("fill", colorMagenta)
+							
+						.text("Deaths since the beginning");
+
+					/*fokus.append("text")
+						.attr("x", xGraphEnd + unigap*3)
+						.attr("y", d3.select(".minor").node().getBoundingClientRect()["top"] + 10)
+						.attr("dominant-baseline", "top")
+						.attr("class", cl + " yAxis label")
+						.attr("fill", colorMagenta)
+							
+						.text("the beginning");*/
+
+					fokus.append("text")
+						.attr("x", xGraphEnd + unigap*3)
+						.attr("y", d3.select(".minor").node().getBoundingClientRect()["top"] + 10)
+						.attr("dominant-baseline", "top")
+						.attr("class", cl + " yAxis label")
+						.attr("fill", colorMagenta)
+							
+						.text("of the selected period");
+					
+								
+
+
+					
+				}
+				
+				
+				
+				function drawInactiveEvent(da, xS, ySd, ySt, out, thisnum)
+				{
+					dada = da[thisnum].data;
+					cl = da[thisnum].class;
+				
+					var deathsLine = d3.svg.line()
+                          .x(function(d,i) { 
+						  
+						  
+						  
+						  return xS(parseInt( d.date)); })
+                          .y(function(d) { return ySd(parseInt( d.cumDeaths)); })
+						  .interpolate("linear");
+						  
+					
+			
+					fokus.append("path")
+                            .attr("d", deathsLine(dada))	
+                            .attr("class", cl + " deathsCum inactive")
+                            .attr("stroke", colorWhite)
+                            .attr("opacity", 0.5);
+							
+				// Draw EXTENSION LINE
+				
+							
+					var outLineList = [ [  xGraphEnd ,  ySd(parseInt(dada[dada.length - 1].cumDeaths)) ],[ xEntentionStart,   ySd(parseInt(dada[dada.length - 1].cumDeaths))] ];
+					
+					console.log(dada[dada.length - 1]);
+					
+					var outLine = d3.svg.line()
+                          .x(function(d,i) { return d[0]; })
+                          .y(function(d) { return d[1]; })
+						  .interpolate("linear");
+						  
+					
+			
+					fokus.append("path")
+                            .attr("d", outLine(outLineList))
+							.attr("class", cl + " deathsCum inactive outline")
+							.attr("stroke", colorWhite)
+                            .attr("opacity", 0.5);
+
+                    fokus.append("circle")
+							.attr("cx",  xEntentionStart)
+							.attr("cy", ySd(parseInt(dada[dada.length - 1].cumDeaths)))
+							.attr("r", 3)
+							.attr("fill", colorWhite);
+
+					drawTpl(dada, fokus,xEntentionStart + unigap * 2 ,  ySd(parseInt(dada[dada.length - 1].cumDeaths)) + unigap*1);
+
+
+			
+					fokus.append("text")
+							.attr("x", xEntentionStart + unigap * 2 )
+							.attr("y",  ySd(parseInt(dada[dada.length - 1].cumDeaths)))
+							.attr("dominant-baseline", "middle")
+							.attr("class", cl + " deathsCum active text")
+							.attr("fill", colorWhite)
+							
+							.text(cl.toUpperCase())
+							.on("click", function() {
+									tweetGraph.selectAll(".fokus").selectAll("*").remove();
+									
+									
+									drawActiveEvent(da, xS, ySd,ySt, w, thisnum);
+									activeLine = thisnum;
+									for(var i = 0; i< da.length; i++){
+										
+										if (i != thisnum){
+											drawInactiveEvent(da, xS, ySd,ySt, w, i);
+										}
+									}
+
+									drawAxis(allDataCut, thisnum);
+									changeDescr(basicData, thisnum, allDataCutPerm[thisnum].data);
+
+									console.log("click");
+								})
+							;
+			
+			
+			// Draw TWEETS
+			
+					var totalTweetsArea = d3.svg.area()
+                          .x(function(d,i) {return xS(parseInt(d.date));})
+                          .y0(function(d) { return ySd(parseInt( d.cumDeaths)); })
+						  .y1(function(d) { return ySd(parseInt( d.cumDeaths)) - ySt(parseInt( d.totalTweets)) ; })
+						  .interpolate(cl);
+						  
+						  
+					/* var posTweetsGraph = tweetGraph.append("path")
+                            .attr("d", totalTweetsArea(dada))
+                            .attr("stroke", "blue")
+                            .attr("stroke-width", 0)
+                            .attr("fill", "turquoise")
+							.attr("class", cl + " totalTweets inactive");*/
+						  
+						  
+					
+					}
+			
+
+			function drawTpl(dada, parent, x, y){
+
+				max =d3.max( dada, function(d){
+										return parseInt(d.cumDeaths)});
+
+				var allTweets = 0;
+				dada.forEach(function(d){ allTweets += parseInt(d.totalTweets)});
+
+				var tpl = Math.round(allTweets / max *100)/100;
+
+				var tplTotalGroup = parent.append("g")
+				  	.attr("transform", "translate(" + x + "," + y + ")");
+
+
+				var man = tplTotalGroup.append("use")
+				   .attr("xlink:href","#manSymbol")
+				   .attr("transform", "translate(" + 0 + "," + 0 + ") scale(0.45)");
+
+				
+
+				man.attr("class", "markerTextMan")
+				
+				manHeight = parseInt(man.node().getBBox().height);	
+				manY = parseInt(man.node().getBBox().y);
+
+				d3.select("#manSymbol").selectAll("*")
+								.attr("fill", colorMagenta);
+
+				
+
+				tplTotalGroup.append("text")
+					.attr("x",15)
+					.attr("y", manHeight/2 )
+					.attr("class", "markerInfo" + " tplTotal")
+					.attr("fill", colorGray)
+					
+					.text(" = " + tpl);
+
+				tplTotalGroup.append("text")
+					.attr("x",25)
+					.attr("y", manHeight/2 +20 )
+					.attr("class", "markerInfo" + " tplTotal")
+					.attr("fill", colorGray)
+					.text("tweets");
+
+
+			}
+
+
+			function changeDescr (d, thisnum, dada)
+
+
+			{	
+
+				d3.selectAll(".descriptionContainer").selectAll(".description").selectAll("*").remove();
+
+				console.log("ddasa" + d[thisnum].name);
+				d3.selectAll(".eventName")
+				.attr("style", "top:" + unigap*11 + "px" )
+					.append("p")
+					.attr("style", "color:" + colorMagenta + "; margin-top: " + unigap * 2+ "px; margin-left: " + unigap  + "px; margin-bottom: " + unigap + "px")
+					.text(d[thisnum].name);
+
+				d3.selectAll(".eventDescription")
+					.attr("style", "top:" + unigap*20 + "px" )
+					.append("p")
+					.attr("style", "color:" + colorGray + "; margin-top: " + unigap + "px; margin-left: " + unigap + "px")
+					.html(d[thisnum].description);	
+
+					var tpl = 0;
+
+
+				console.log("asdasdasdas")
+				console.log(dada);
+				max =d3.max( dada, function(d){
+										return parseInt(d.cumDeaths)});
+
+				var allTweets = 0;
+				dada.forEach(function(d){ allTweets += parseInt(d.totalTweets)});
+
+				tpl = Math.round(allTweets / max *100)/100;
+
+
+
+
+
+				d3.selectAll(".dContainer")
+					.attr("style", "top:" + (yGraphEnd- unigap*1.5) + "px" )
+					.append("div")
+					.append("p")
+					.attr("class", "tplNum")
+					.attr("style", "color:" + colorWhite + "; margin-top: " + unigap + "px; margin-left: " + unigap + "px")
+					.html( max + " casualties");
+
+				d3.selectAll(".tContainer")
+					.attr("style", "top:" + (yGraphEnd) + "px" )
+					.append("div")
+					.append("p")
+					.attr("class", "tplNum")
+					.attr("style", "color:" + colorWhite + "; margin-top: " + unigap + "px; margin-left: " + unigap + "px")
+					.html( allTweets + " tweets");
+
+				d3.selectAll(".tplContainer")
+					.attr("style", "top:" + (yGraphEnd+30) + "px" )
+					.append("div")
+					.append("p")
+					.attr("class", "tplNum")
+					.attr("style", "color:" + colorMagenta + "; margin-top: " + unigap + "px; margin-left: " + unigap + "px")
+					.html( tpl);
+
+				var tplNumGraph = d3.selectAll(".tplContainer")
+					.append("div")
+					.append("svg")
+					.attr("class", "tplNumGraph")
+					.attr("width", 20)
+					.attr("height", 40);
+
+
+				var man = tplNumGraph.append("use")
+					 .attr("xlink:href","#manSymbol")
+					 .attr("transform", " scale(0.65)");
+
+				var explanation = d3.selectAll(".tplContainer")
+					.append("div")
+					.attr("class", "explanation")
+					.append("p")
+					.attr("class", "explanation")
+					.attr("style", "color:" + colorMagenta + ";  margin-left: " + unigap + "px")
+					.html("Total tweets per life");
+
+				d3.selectAll("div.explanation")
+					.append("p")
+					.attr("class", "explanation1")
+					.attr("style", "color:" + colorGray + ";  margin-left: " + unigap + "px")
+					.html("This is an average value showing how many tweets come per one life lost during the period.");
+			}
+
+
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			//DATA_LOAD
+			d3.json("basicData.json", function(json) {
+				  //if (error) return console.warn(error);
+				  basicData = json;
+				 console.log("ddasa" + basicData[0].name);
+
+
+
+  
+
+			d3.tsv("result_syria.tsv", function(data) {
+			d3.tsv("result_ebola.tsv", function(data1) {
+
+
+
+				
+			repairTime(data);
+			repairTime(data1);				
+				//var parsedD = d3.tsv.parseRows(d);
+			
+				/*d.forEach(function(data, i) {
+    				syriaCounter[i] = data.cumDeaths;
+				  });*/
+				  
+				
+				//console.log(data[data.length - 2]);
+				 
+			data = timeExtract(base, currentTime, data); 
+			data1 = timeExtract(base, currentTime, data1);
+			
+			
+			allDataUncut[0].data = data;
+			allDataUncut[1].data = data1;
+			allDataUncut[0].class = "Syria";
+			allDataUncut[1].class = "Ebola";
+			
+			allDataCutPerm  = timeExtractArray( base, currentTime, allDataUncut);
+			
+			changeDescr(basicData, 0, allDataCutPerm[0].data);
+			
+				
+			 console.log(data1);
+			
+			allDataCut = timeExtractArray( base, currentTime, allDataUncut);	
+			console.log(allDataCut);
+			console.log(allDataUncut); 
+			
+							
+			
+			
+			// SCALES
+			/*var cutDataZ = recalculateCumDeathsInArea (allDataCut[0].data);
+			var cutDataZ1 = recalculateCumDeathsInArea (allDataCut[1].data); */
+			
+			
+			
+			
+			minvalue =d3.min( allDataCut[0].data.concat(allDataCut[1].data), function(d){
+										return parseInt(d.cumDeaths)});
+										
+			
+										
+			maxvalue = d3.max( allDataCut[0].data.concat(allDataCut[1].data), function(d){
+										return parseInt(d.cumDeaths)});
+
+			
+			
+			xScale.domain([d3.min( allDataCut[0].data, function(d){
+										return parseInt(d.date)}), 
+									d3.max( allDataCut[0].data, function(d){
+										return parseInt(d.date)})
+								]);
+							
+		
+			
+			yScaleDeaths.domain([0, 2*maxvalue]);
+			
+			yScaleTweets.domain([0, d3.max( allDataCut[0].data, function(d){
+									return parseInt(d.totalTweets)})
+								]);
+
+			yScaleTweets1.domain([0, d3.max( allDataCut[0].data, function(d){
+									return parseInt(d.totalTweets)})
+								]);
+
+
+
+								
+			
+			
+			
+			
+			
+		
+			
+			
+						  
+			drawActiveEvent(allDataCut, xScale, yScaleDeaths,yScaleTweets, w, 0);
+			drawInactiveEvent(allDataCut, xScale, yScaleDeaths,yScaleTweets, w, 1);
+			drawAxis(allDataCut, 0);
+			drawContext (allDataCutPerm, 0);
+
+			getTweetsByTimeSent(1431149897 * 1000, "syria", "neu", 0.2);
+			
+			
+			d3.select(window).on('resize', resize); 
+							 
+							
+			});
+			});
+			});
+
+			
+
+			
+			/*d3.selectAll("text")
+				.on("click", function() {
+					tweetGraph.selectAll("*").remove();
+					drawInactiveEvent(cutData, "syria", xScale, yScaleDeaths,yScaleTweets, w);
+					drawActiveEvent(cutData1, "ebola", xScale, yScaleDeaths,yScaleTweets, w);
+					console.log("click");
+				})
+				.text("changed");*/
+			
+			
+
+			
+			
+        </script>
+    </body>
+</html>
